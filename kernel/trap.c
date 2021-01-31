@@ -67,6 +67,22 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+  } else if(r_scause() == 13 || r_scause() == 15) {
+	uint64 virtual = r_stval();
+	uint64 physical = (uint64)kalloc();
+	if(virtual > myproc()->sz) {
+		panic("VA is larger than sz");
+	}
+	if(physical == 0) {
+		panic("kalloc");
+	} else {
+		virtual = PGROUNDDOWN(virtual);
+		if(mappages(p->pagetable, virtual, PGSIZE, physical, PTE_U|PTE_W|PTE_R) != 0) {
+			kfree((void *)physical);
+			p->killed = 1;
+		}
+	}
+
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());

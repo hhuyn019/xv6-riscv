@@ -41,24 +41,20 @@ sys_wait(void)
 uint64
 sys_sbrk(void)
 {
+  int addr;
   int n;
-  struct proc *proc = myproc();
 
   if(argint(0, &n) < 0)
     return -1;
-  
-  uint64 oldsz = proc->sz;
-  
-  if (n > 0)
-  {
-    proc->sz += n;
-  }
-  else
-  {
-    growproc(n);
-  }
-  
-  return oldsz;
+  addr = myproc()->sz;
+  myproc()->sz = myproc()->sz + n;
+  if(myproc()->sz > MAXVA)
+   {
+       return -1;
+    }
+//  if(growproc(n) < 0)
+//    return -1;
+  return addr;
 }
 
 uint64

@@ -521,3 +521,4 @@ checkChild(pagetable_t pagetable, int idx) {
       checkChild((pagetable_t)child, idx + 1);
     }
   }
+}

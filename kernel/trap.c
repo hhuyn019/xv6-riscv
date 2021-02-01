@@ -67,21 +67,16 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
-  } else if(r_scause() == 13 || r_scause() == 15) {
-	uint64 virtual = r_stval();
-	uint64 physical = (uint64)kalloc();
-	if(virtual > myproc()->sz) {
-		panic("VA is larger than sz");
-	}
-	if(physical == 0) {
-		panic("kalloc");
-	} else {
-		virtual = PGROUNDDOWN(virtual);
-		if(mappages(p->pagetable, virtual, PGSIZE, physical, PTE_U|PTE_W|PTE_R) != 0) {
-			kfree((void *)physical);
-			p->killed = 1;
-		}
-	}
+ } else if(r_scause() == 13 || r_scause() == 15){
+    uint64 va = r_stval();
+    if (va >= p->sz) p->killed = 1;
+    else if (va <= PGROUNDDOWN(p->tf->sp)) p->killed = 1;
+    else { 
+      if(lazyalloc(p->pagetable, va) != 0){
+        printf("lazy alloc error va = %p\n", va);
+        p->killed = 1;    
+      }     
+    }
 
   // } else {
   //   printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);

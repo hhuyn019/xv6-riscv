@@ -59,6 +59,10 @@ int
 argint(int n, int *ip)
 {
   *ip = argraw(n);
+  if(*ip >= myproc()->sz)
+    {
+        return -1;
+    }
   return 0;
 }
 
@@ -69,6 +73,10 @@ int
 argaddr(int n, uint64 *ip)
 {
   *ip = argraw(n);
+  if(*ip >= myproc()->sz)
+    {
+        return -1;
+    }
   return 0;
 }
 

@@ -175,29 +175,34 @@ mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 // the given range must exist. Optionally free the
 // physical memory.
 void
-uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
+uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
 {
-  uint64 a;
+  uint64 a, last;
   pte_t *pte;
+  uint64 pa;
 
-  if((va % PGSIZE) != 0)
-    panic("uvmunmap: not aligned");
-
-  for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
+  a = PGROUNDDOWN(va);
+  last = PGROUNDDOWN(va + size - 1);
+  for(a = va; a < va + size*PGSIZE; a = a + PGSIZE){
     if((pte = walk(pagetable, a, 0)) == 0)
-      continue;
-    if((*pte & PTE_V) == 0)
-    {
-      *pte = 0;
-      continue;
+     // panic("uvmunmap: walk");i
+     	continue;
+    if((*pte & PTE_V) == 0){
+      //printf("va=%p pte=%p\n", a, *pte);
+	continue;
+//      panic("uvmunmap: not mapped");
     }
     if(PTE_FLAGS(*pte) == PTE_V)
       panic("uvmunmap: not a leaf");
     if(do_free){
-      uint64 pa = PTE2PA(*pte);
+      pa = PTE2PA(*pte);
       kfree((void*)pa);
     }
     *pte = 0;
+    if(a == last)
+      break;
+    a += PGSIZE;
+    pa += PGSIZE;
   }
 }
 

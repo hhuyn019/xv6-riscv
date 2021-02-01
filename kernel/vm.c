@@ -185,7 +185,6 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
   uint64 a, last;
   pte_t *pte;
   uint64 pa;
-
   a = PGROUNDDOWN(va);
   last = PGROUNDDOWN(va + size - 1);
   for(;;){
@@ -205,7 +204,6 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
       kfree((void*)pa);
     }
     *pte = 0;
-    end:
     if(a == last)
       break;
     a += PGSIZE;

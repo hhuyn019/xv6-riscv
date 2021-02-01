@@ -191,11 +191,12 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
   for(;;){
     if((pte = walk(pagetable, a, 0)) == 0){
       // panic("uvmunmap: walk");
-      goto end;
+      continue;
     }
     if((*pte & PTE_V) == 0){
       // printf("va=%p pte=%p\n", a, *pte);
       // panic("uvmunmap: not mapped");
+      continue;
     }
     if(PTE_FLAGS(*pte) == PTE_V)
       panic("uvmunmap: not a leaf");
@@ -369,7 +370,7 @@ uvmclear(pagetable_t pagetable, uint64 va)
 
 int 
 handleCopys
-(uint64 addr, int len){ //essentially took the same idea from trap and reused it here
+(uint64 addr, int len){ 
   uint64 oldAddr;
   uint64 newAddr;
 

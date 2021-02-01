@@ -67,73 +67,28 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
- } else if(r_scause() == 13 || r_scause() == 15){
-    uint64 va = r_stval();
-    if (va >= p->sz) p->killed = 1;
-    else if (va <= PGROUNDDOWN(p->tf->sp)) p->killed = 1;
-    else { 
-      if(lazyalloc(p->pagetable, va) != 0){
-        printf("lazy alloc error va = %p\n", va);
-        p->killed = 1;    
-      }     
-    }
+  } else if(r_scause() == 13 || r_scause() == 15) {
+	uint64 virtual = r_stval();
+	uint64 physical = (uint64)kalloc();
+	if(virtual > myproc()->sz) {
+		panic("VA is larger than sz");
+	}
+	if(physical == 0) {
+		panic("kalloc");
+	} else {
+		virtual = PGROUNDDOWN(virtual);
+		if(mappages(p->pagetable, virtual, PGSIZE, physical, PTE_U|PTE_W|PTE_R) != 0) {
+			kfree((void *)physical);
+			p->killed = 1;
+		}
+	}
 
-  // } else {
-  //   printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
-  //   printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-  //   p->killed = 1;
-  // }
-} 
-  else {
-    uint64 scause = r_scause();
-    // page fault
-    if (scause == 13 || scause == 15)
-    {
-      uint64 va = r_stval();
-      // Kill a process if it page-faults on a virtual memory address
-      // higher than any allocated with sbrk().
-      if (va >= p->sz)
-      {
-        printf("usertrap: invalid virtual address\n");
-        p->killed = 1;
-        goto done;
-      }
-
-      // Kill a process if it page-faults on the invalid page below the user stack.
-      if (va <= PGROUNDDOWN(p->tf->sp))
-      {
-        printf("usertrap: guard page\n");
-        p->killed = 1;
-        goto done;
-      }
-
-      va = PGROUNDDOWN(va);
-      char *mem = kalloc();
-      // out of memory, kill the process
-      if (mem == 0)
-      {
-        printf("usertrap: out of memory\n");
-        p->killed = 1;
-        goto done;
-      }
-      memset(mem, 0, PGSIZE);
-
-      if (mappages(p->pagetable, va, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != 0)
-      {
-        printf("usertrap: mappages falied\n");
-        kfree(mem);
-        p->killed = 1;
-        goto done;
-      }
-    }
-    else
-    {
-      printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
-      printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-      p->killed = 1;
-    }
+  } else {
+    printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
+    printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+    p->killed = 1;
   }
-  done:
+
   if(p->killed)
     exit(-1);
 

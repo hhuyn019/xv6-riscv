@@ -449,31 +449,3 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
-
-// lazy allocation.
-// return 0 on success
-// -1 on failure.
-int
-lazyalloc(pagetable_t pagetable, uint64 va)
-{
-  va = PGROUNDDOWN(va); // get the page boundary.
-  if(va >= MAXVA) {
-    printf("va:%p is bigger than MAXVA\n", va);
-    return -1;
-  }
-
-  char *mem;
-  mem = kalloc();
-  if(mem == 0){
-    printf("can't kalloc mem\n");
-    // vmprint(myproc()->pagetable);
-    return -1;
-  }
-  memset(mem, 0, PGSIZE);
-  if(mappages(pagetable, va, PGSIZE, (uint64)mem, PTE_W|PTE_X|PTE_R|PTE_U) != 0){
-    kfree(mem);
-    printf("mappages error\n");
-    return -1;
-  }
-  return 0;
-}

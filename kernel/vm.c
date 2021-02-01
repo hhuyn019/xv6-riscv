@@ -211,10 +211,10 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
   for(a = va; a < va + size*PGSIZE; a = a + PGSIZE){
     if((pte = walk(pagetable, a, 0)) == 0)
      // panic("uvmunmap: walk");i
-     	continue;
+     	goto end;
     if((*pte & PTE_V) == 0){
       //printf("va=%p pte=%p\n", a, *pte);
-	continue;
+	// continue;
 //      panic("uvmunmap: not mapped");
     }
     if(PTE_FLAGS(*pte) == PTE_V)
@@ -224,6 +224,7 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
       kfree((void*)pa);
     }
     *pte = 0;
+    end:
     if(a == last)
       break;
     a += PGSIZE;

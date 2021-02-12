@@ -476,16 +476,12 @@ int page_fault_handler(pagetable_t pagetable, uint64 va) {
   }
   uint64 pa = PTE2PA(*pte);
   uint flags = (PTE_FLAGS(*pte) & ~PTE_COW) | PTE_W;
-
   char* mem;
   if ((mem = kalloc()) == 0) {
     return -1;
   }
   memmove(mem, (char *)pa, PGSIZE);
-
   kfree((void *)pa);
-
   *pte = PA2PTE(mem) | flags;
-
   return 0;
 }

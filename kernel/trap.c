@@ -65,7 +65,7 @@ usertrap(void)
     intr_on();
 
     syscall();
-     } else if (r_scause() == 13 || r_scause() == 15) {
+     } else if (r_scause() == 15) {
     uint64 va = r_stval();
     if (handle_page_fault(p->pagetable, va) != 0) {
       p->killed = 1;

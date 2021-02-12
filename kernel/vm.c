@@ -381,7 +381,9 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
       return -1;
     pte_t *pte = walk(pagetable, va0, 0);
     if (*pte & PTE_COW) {
-      if (page_fault_handler(pagetable, va0) != 0) return -1;
+      if (page_fault_handler(pagetable, va0) == -1) {
+        return -1;
+      }
     }
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
@@ -469,18 +471,15 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 int page_fault_handler(pagetable_t pagetable, uint64 va) {
   va = PGROUNDDOWN(va);
   pte_t *pte = walk(pagetable, va, 0);
-  if (pte == 0) { 
+  if ((pte == 0) || (!(*pte & PTE_COW))) { 
     return -1;
-  }
-  if (!(*pte & PTE_COW)){
-    return -2;
   }
   uint64 pa = PTE2PA(*pte);
   uint flags = (PTE_FLAGS(*pte) & ~PTE_COW) | PTE_W;
 
   char* mem;
   if ((mem = kalloc()) == 0) {
-return -3;
+    return -1;
   }
   memmove(mem, (char *)pa, PGSIZE);
 

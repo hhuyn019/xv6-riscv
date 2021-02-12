@@ -56,8 +56,6 @@ freerange(void *pa_begin, void *pa_end)
 {
   char *p;
   p = (char*)PGROUNDUP((uint64)pa_begin);
-  // for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) 
-    // kfree(p);
       for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) {
     ref_inc(p);
     kfree(p);

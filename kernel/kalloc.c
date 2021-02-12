@@ -38,17 +38,17 @@ kinit()
   freerange(pa_begin, (void*)PHYSTOP);
 }
 
-uint32* get_rc(void* pa) {
+uint32* get_ref(void* pa) {
   uint32* p = ref_begin;
   return &p[(pa - pa_begin) / PGSIZE];
 }
 
 uint32 ref_inc(void* pa) {
-  return ++(*get_rc(pa));
+  return ++(*get_ref(pa));
 }
 
 uint32 ref_dec(void* pa) {
-  return --(*get_rc(pa));
+  return --(*get_ref(pa));
 }
 
 void

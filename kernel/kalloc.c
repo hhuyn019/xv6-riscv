@@ -33,7 +33,7 @@ kinit()
   // freerange(end, (void*)PHYSTOP);
   uint64 total = ((uint64)PHYSTOP - (uint64)end) / PGSIZE * sizeof(uint32);
   ref_begin = (void*)PGROUNDUP((uint64)end);
-  pa_begin = (void*)PGROUNDUP((uint64)ref_begin + total;
+  pa_begin = (void*)PGROUNDUP((uint64)ref_begin + total);
   memset(ref_begin, 0, pa_begin - ref_begin);
   freerange(pa_begin, (void*)PHYSTOP);
 }

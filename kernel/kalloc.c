@@ -9,14 +9,13 @@
 #include "riscv.h"
 #include "defs.h"
 
-void freerange(void *pa_start, void *pa_end);
+void freerange(void *pa_begin, void *pa_end);
 
 extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
-void* rc_start = 0;
-void* pa_start = 0;
-
+void* pa_begin = 0;
+void* ref_begin = 0;
 
 struct run {
   struct run *next;
@@ -34,15 +33,15 @@ kinit()
   // freerange(end, (void*)PHYSTOP);
    uint64 total_pages = ((uint64)PHYSTOP - (uint64)end) / PGSIZE *
                        sizeof(uint32);
-  rc_start = (void*)PGROUNDUP((uint64)end);
-  pa_start = (void*)PGROUNDUP((uint64)rc_start + total_pages);
-  memset(rc_start, 0, pa_start - rc_start);
-  freerange(pa_start, (void*)PHYSTOP);
+  ref_begin = (void*)PGROUNDUP((uint64)end);
+  pa_begin = (void*)PGROUNDUP((uint64)ref_begin + total_pages);
+  memset(ref_begin, 0, pa_begin - ref_begin);
+  freerange(pa_begin, (void*)PHYSTOP);
 }
 
 uint32* get_rc(void* pa) {
-  uint32* p = rc_start;
-  return &p[(pa - pa_start) / PGSIZE];
+  uint32* p = ref_begin;
+  return &p[(pa - pa_begin) / PGSIZE];
 }
 
 uint32 ref_inc(void* pa) {
@@ -54,10 +53,10 @@ uint32 ref_dec(void* pa) {
 }
 
 void
-freerange(void *pa_start, void *pa_end)
+freerange(void *pa_begin, void *pa_end)
 {
   char *p;
-  p = (char*)PGROUNDUP((uint64)pa_start);
+  p = (char*)PGROUNDUP((uint64)pa_begin);
   // for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) 
     // kfree(p);
       for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) {

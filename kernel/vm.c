@@ -345,7 +345,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     if(mappages(new, i, PGSIZE, pa, flags) != 0){
       goto err;
     }
-    incr_rc((void *)pa);
+    ref_inc((void *)pa);
   }
   return 0;
 

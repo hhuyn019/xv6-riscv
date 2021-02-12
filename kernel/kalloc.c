@@ -40,18 +40,20 @@ kinit()
   freerange(pa_start, (void*)PHYSTOP);
 }
 
+uint32 ref_dec(void* pa) {
+  return --(*get_rc(pa));
+}
+
+
+uint32 ref_inc(void* pa) {
+  return ++(*get_rc(pa));
+}
+
 uint32* get_rc(void* pa) {
   uint32* p = rc_start;
   return &p[(pa - pa_start) / PGSIZE];
 }
 
-uint32 incr_rc(void* pa) {
-  return ++(*get_rc(pa));
-}
-
-uint32 decr_rc(void* pa) {
-  return --(*get_rc(pa));
-}
 
 void
 freerange(void *pa_start, void *pa_end)
@@ -61,7 +63,7 @@ freerange(void *pa_start, void *pa_end)
   // for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) 
     // kfree(p);
       for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) {
-    incr_rc(p);
+    ref_inc(p);
     kfree(p);
   }
 }
@@ -79,7 +81,7 @@ kfree(void *pa)
     panic("kfree");
 
      acquire(&kmem.lock);
-  if (decr_rc(pa) != 0) {
+  if (ref_dec(pa) != 0) {
     release(&kmem.lock);
     return;
   }
@@ -107,7 +109,7 @@ kalloc(void)
   r = kmem.freelist;
   if(r) {
     kmem.freelist = r->next;
-   incr_rc(r);
+   ref_inc(r);
   }
   release(&kmem.lock);
 

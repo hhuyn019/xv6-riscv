@@ -1,0 +1,15 @@
+--- kernel/spinlock.c
++++ kernel/spinlock.c
+@@ -48,9 +48,10 @@
+ void
+ release(struct spinlock *lk)
+ {
+-  if(!holding(lk))
++  if(!holding(lk)) {
++   // printf(lk->name);
+     panic("release");
+-
++  }
+   lk->cpu = 0;
+ 
+   // Tell the C compiler and the CPU to not move loads or stores

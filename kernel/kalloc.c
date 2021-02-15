@@ -43,11 +43,11 @@ uint32* get_ref(void* pa) {
   return &p[(pa - pa_begin) / PGSIZE];
 }
 
-uint32 ref_inc(void* pa) {
+uint64 ref_inc(void* pa) {
   return ++(*get_ref(pa));
 }
 
-uint32 ref_dec(void* pa) {
+uint64 ref_dec(void* pa) {
   return --(*get_ref(pa));
 }
 

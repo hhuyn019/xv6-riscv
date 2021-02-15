@@ -471,17 +471,20 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 int page_fault_handler(pagetable_t pagetable, uint64 va) {
   va = PGROUNDDOWN(va);
   pte_t *pte = walk(pagetable, va, 0);
-  if ((pte == 0) || (!(*pte & PTE_COW))) { 
-    return -1;
-  }
   uint64 pa = PTE2PA(*pte);
-  uint flags = (PTE_FLAGS(*pte) & ~PTE_COW) | PTE_W;
-  char* mem;
-  if ((mem = kalloc()) == 0) {
+  if (pte == 0) { 
     return -1;
   }
-  memmove(mem, (char *)pa, PGSIZE);
+  if (!(*pte & PTE_COW)) {
+    return -1;
+  }
+  uint flags = (PTE_FLAGS(*pte) & ~PTE_COW) | PTE_W;
+  char* m;
+  if ((m = kalloc()) == 0) {
+    return -1;
+  }
+  memmove(m, (char *)pa, PGSIZE);
   kfree((void *)pa);
-  *pte = PA2PTE(mem) | flags;
+  *pte = PA2PTE(m) | flags;
   return 0;
 }

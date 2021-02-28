@@ -39,7 +39,7 @@ def test_time():
     try:
         with open('time.txt') as f:
             d = f.read().strip()
-            printf(d);
+            print(d)
             if not re.match(r'^\d+$', d):
                 raise AssertionError('time.txt does not contain a single integer (number of hours spent on the lab)')
     except IOError:

@@ -534,12 +534,12 @@ sys_symlink(void)
     return -1;
   }
 
-  if (argstr(1, path, MAXPATH) < 0) {
+   if ((ip = create(path, T_SYMLINK, 0, 0)) == 0) {
     end_op(ROOTDEV);
     return -1;
   }
-
-  if ((ip = create(path, T_SYMLINK, 0, 0)) == 0) {
+  
+  if (argstr(1, path, MAXPATH) < 0) {
     end_op(ROOTDEV);
     return -1;
   }

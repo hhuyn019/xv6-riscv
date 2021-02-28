@@ -309,22 +309,10 @@ sys_open(void)
       return -1;
     }
 
-
-    /**
-     * 
-     * REE
-     * 
-     **/
-
  if (ip->type == T_SYMLINK) {
-      // If the linked file is also a symbolic link,
-      // you must recursively follow it until a non-link file is reached.
-      // If the links form a cycle, you must return an error code.
-      // You may approximate this by returning an error code
-      // if the depth of links reaches some threshold (e.g., 10).
-      int threshold = 10;
       if (!(omode & O_NOFOLLOW)) {
-        while(--threshold > 0) {
+      int limit = 10;
+        while(--limit >= 1) {
           if (ip->type == T_SYMLINK) {
             ilock(ip);
             if(readi(ip, 0, (uint64)&path, 0, MAXPATH) <= 0) {
@@ -336,13 +324,14 @@ sys_open(void)
           } else {
             break;
           }
+
           if ((ip = namei(path)) == 0) {
             end_op(ROOTDEV);
             return -1;
           }
         }
-        // Not found file
-        if (threshold == 0) {
+
+        if (limit == 0) {
           end_op(ROOTDEV);
           return -1;
         }
@@ -531,25 +520,31 @@ sys_pipe(void)
 uint64
 sys_symlink(void)
 {
-  char target[MAXPATH];
-  char path[MAXPATH];
-  struct inode *ip;
+  char target[MAXPATH], path[MAXPATH];
+  struct inode *iptr;
 
   if (argstr(0, target, MAXPATH) < 0)
     return -1;
 
   begin_op(ROOTDEV);
-  if (argstr(1, path, MAXPATH) < 0 || (ip = create(path, T_SYMLINK, 0, 0)) == 0) {
-    end_op(ROOTDEV);
-    return -1;
-  }
-  if (writei(ip, 0, (uint64)&target, 0, MAXPATH) != MAXPATH) {
-    iunlockput(ip);
+
+  if (writei(iptr, 0, (uint64)&target, 0, MAXPATH) != MAXPATH) {
+    iunlockput(iptr);
     end_op(ROOTDEV);
     return -1;
   }
 
-  iunlockput(ip);
+  if (argstr(1, path, MAXPATH) < 0) {
+    end_op(ROOTDEV);
+    return -1;
+  }
+
+  if ((iptr = create(path, T_SYMLINK, 0, 0)) == 0) {
+    end_op(ROOTDEV);
+    return -1;
+  }
+  
+  iunlockput(iptr);
   end_op(ROOTDEV);
   return 0;
 }

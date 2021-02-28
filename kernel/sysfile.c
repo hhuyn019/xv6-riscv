@@ -528,7 +528,7 @@ sys_symlink(void)
 
   begin_op(ROOTDEV);
 
-  if (argstr(1, path, MAXPATH) < 0 || (ip = create(path, T_SYMLINK, 0, 0)) == 0) {
+  if ((ip = create(path, T_SYMLINK, 0, 0)) == 0 || argstr(1, path, MAXPATH) < 0) {
     end_op(ROOTDEV);
     return -1;
   }

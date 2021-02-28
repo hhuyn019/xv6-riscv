@@ -528,18 +528,18 @@ sys_symlink(void)
 
   begin_op(ROOTDEV);
 
-  if ((ip = create(path, T_SYMLINK, 0, 0)) == 0) {
+  if (writei(ip, 0, (uint64)&target, 0, MAXPATH) != MAXPATH) {
+    iunlockput(ip);
+    end_op(ROOTDEV);
+    return -1;
+  }
+
+    if ((ip = create(path, T_SYMLINK, 0, 0)) == 0) {
     end_op(ROOTDEV);
     return -1;
   }
   
   if (argstr(1, path, MAXPATH) < 0) {
-    end_op(ROOTDEV);
-    return -1;
-  }
-
-  if (writei(ip, 0, (uint64)&target, 0, MAXPATH) != MAXPATH) {
-    iunlockput(ip);
     end_op(ROOTDEV);
     return -1;
   }

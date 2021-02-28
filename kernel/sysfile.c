@@ -520,15 +520,16 @@ sys_pipe(void)
 uint64
 sys_symlink(void)
 {
-  char target[MAXPATH], path[MAXPATH];
   struct inode *ip;
+  char target[MAXPATH], path[MAXPATH];
 
-  if (argstr(0, target, MAXPATH) < 0)
+  if (argstr(0, target, MAXPATH) < 0) {
     return -1;
+  }
 
   begin_op(ROOTDEV);
 
-  if ((ip = create(path, T_SYMLINK, 0, 0)) == 0 || argstr(1, path, MAXPATH) < 0) {
+  if (argstr(1, path, MAXPATH) < 0 || (ip = create(path, T_SYMLINK, 0, 0)) == 0) {
     end_op(ROOTDEV);
     return -1;
   }

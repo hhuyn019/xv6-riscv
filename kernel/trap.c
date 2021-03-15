@@ -36,16 +36,16 @@ trapinithart(void)
 }
 
 
-// struct vma *
-// pickvma(struct proc *p,uint64 a)
-// {
-//     for(int i=0;i<MAXVMA;i++){
-//         if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
-//             return &p->vma_table[i];
-//         }
-//     }
-//     return 0;
-// }
+struct vma *
+setvma(struct proc *p,uint64 a)
+{
+    for(int i=0;i<MAXVMA;i++){
+        if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
+            return &p->vma_table[i];
+        }
+    }
+    return 0;
+}
 
 int
 handle_page_fault(struct proc *p,uint64 va)
@@ -59,23 +59,7 @@ handle_page_fault(struct proc *p,uint64 va)
 
     struct vma *vma;
 
-    int found = 0;
-    // bool found = false;
-
-      for(int i=0;i<MAXVMA;i++){
-        if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
-           vma = &p->vma_table[i];
-           found = 1;
-        }
-      }
-
-    if (found == 1) {
-      // continue;
-    } else {
-      vma = 0;
-    }
-
-    if (vma == 0) {
+    if (vma = setvma(p, a) == 0) {
       return -1;
     }
 

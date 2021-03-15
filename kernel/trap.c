@@ -61,22 +61,30 @@ handle_page_fault(struct proc *p,uint64 va)
     struct inode *ip;
     char *mem;
 
-    if ((vma = setvma(p, a)) == 0) {
+    vma = setvma(p,a);
+
+    if (vma == 0) {
       return -1;
     }
 
-    // if(vma->file==0||(ip=vma->file->ip)==0){
+    ip = vma->file->ip;
+    if (ip == 0 || vma->file == 0) {
+      return -1;
+    }
+
+    mem = (char *)kalloc();
+
+    if (mem == 0) {
+      return -1;
+    }
+    
+    mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U);
+    kfree(mem);
+    return -1;
+    // if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
+    //     kfree(mem);
     //     return -1;
     // }
-
-    if((mem=(char *)kalloc())==0){
-        return -1;
-    }
-
-    if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
-        kfree(mem);
-        return -1;
-    }
 
     int r;
     ilock(ip);

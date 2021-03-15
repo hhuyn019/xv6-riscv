@@ -534,12 +534,12 @@ int file_write_new(struct file *f, uint64 addr,int n ,uint off)
       int n1=n-i;
       if(n1>max) n1=max;
 
-      begin_op();
+      begin_op(0);
       ilock(f->ip);
       if((r=writei(f->ip , 1 , addr +i,off,n1)) >0 )
           off+=r;
       iunlock(f->ip);
-      end_op();
+      end_op(0);
 
       if(r!=n1)  break;
       i+=r;

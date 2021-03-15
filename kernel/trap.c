@@ -72,7 +72,6 @@ usertrap(void)
 
     syscall();
   } else if((which_dev = devintr()) != 0){
-  } else {
     // ok
   //  } else if(r_scause()==13 || r_scause()==15)//page fault
   // {
@@ -114,12 +113,13 @@ usertrap(void)
   //     }
   //     if(!lazy)  goto a;// no lazy allocation is needed
   // } 
-  // else {
-  //  a:	  
-  //   printf("usertrap(): unexpected scause %p (%s) pid=%d\n", r_scause(), scause_desc(r_scause()), p->pid);
-  //   printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-  //   p->killed = 1;
-  // }
+  }
+  else {
+   a:	  
+    printf("usertrap(): unexpected scause %p (%s) pid=%d\n", r_scause(), scause_desc(r_scause()), p->pid);
+    printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+    p->killed = 1;
+  }
 
   if(p->killed)
     exit(-1);

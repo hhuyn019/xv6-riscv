@@ -595,8 +595,8 @@ munmap(uint64 addr,int len)
         return -1;
     }
 
-    int flags=vma->flags;
-    int perm=vma->perm;
+    // int flags=vma->flags;
+    // int perm=vma->perm;
 
     // if((perm & PROT_WRITE) && (flags & MAP_SHARED)){
         pte_t *pte = walk(p->pagetable, addr,0);

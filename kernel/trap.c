@@ -36,16 +36,16 @@ trapinithart(void)
 }
 
 
-struct vma *
-pickvma(struct proc *p,uint64 a)
-{
-    for(int i=0;i<MAXVMA;i++){
-        if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
-            return &p->vma_table[i];
-        }
-    }
-    return 0;
-}
+// struct vma *
+// pickvma(struct proc *p,uint64 a)
+// {
+//     for(int i=0;i<MAXVMA;i++){
+//         if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
+//             return &p->vma_table[i];
+//         }
+//     }
+//     return 0;
+// }
 
 int
 handle_page_fault(struct proc *p,uint64 va)
@@ -59,8 +59,16 @@ handle_page_fault(struct proc *p,uint64 va)
 
     struct vma *vma;
 
-    if((vma=pickvma(p,a))==0){
-        return -1;
+      for(int i=0;i<MAXVMA;i++){
+        if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
+           vma = &p->vma_table[i];
+        } else {
+          vma = 0;
+        }
+    }
+
+    if (vma == 0) {
+      return -1;
     }
 
     struct inode *ip;

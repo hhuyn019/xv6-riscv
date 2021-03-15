@@ -58,17 +58,17 @@ handle_page_fault(struct proc *p,uint64 va)
     }
 
     struct vma *vma;
+    struct inode *ip;
+    char *mem;
 
     if ((vma = setvma(p, a)) == 0) {
       return -1;
     }
 
-    struct inode *ip;
     if(vma->file==0||(ip=vma->file->ip)==0){
         return -1;
     }
 
-    char *mem;
     if((mem=(char *)kalloc())==0){
         return -1;
     }

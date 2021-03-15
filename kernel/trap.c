@@ -65,13 +65,13 @@ handle_page_fault(struct proc *p,uint64 va)
       return -1;
     }
 
-    if(vma->file==0||(ip=vma->file->ip)==0){
-        return -1;
-    }
-
-    // if((mem=(char *)kalloc())==0){
+    // if(vma->file==0||(ip=vma->file->ip)==0){
     //     return -1;
     // }
+
+    if((mem=(char *)kalloc())==0){
+        return -1;
+    }
 
     if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
         kfree(mem);

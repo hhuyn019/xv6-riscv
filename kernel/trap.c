@@ -40,8 +40,8 @@ struct vma *
 pickvma(struct proc *p,uint64 a)
 {
     for(int i=0;i<MAX_VMA_COUNT;i++){
-        if(p->vma_list[i].used&&a>=p->vma_list[i].start&&a<p->vma_list[i].end){
-            return &p->vma_list[i];
+        if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
+            return &p->vma_table[i];
         }
     }
     return 0;
@@ -73,7 +73,7 @@ handle_page_fault(struct proc *p,uint64 va)
         return -1;
     }
 
-    if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->prot|PTE_U) != 0){
+    if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
         kfree(mem);
         return -1;
     }

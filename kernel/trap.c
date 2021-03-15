@@ -59,6 +59,12 @@ handle_page_fault(struct proc *p,uint64 va)
 
     struct vma *vma;
 
+    for(int i = 0; i < MAXVMA; i++) {
+      if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
+           vma = &p->vma_table[i];
+        }
+    }
+
     // if((vma=pickvma(p,a))==0){
     //     return -1;
     // }

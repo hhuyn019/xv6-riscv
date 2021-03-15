@@ -591,13 +591,12 @@ munmap(uint64 addr,int len)
     struct proc *p=myproc();
     struct vma *vma;
 
-    
-    int flags=vma->flags;
-    int perm=vma->perm;
-
     if((vma=locatevma(p,addr))==0){
         return -1;
     }
+
+    int flags=vma->flags;
+    int perm=vma->perm;
 
     if((flags & MAP_PRIVATE) && (flags & MAP_SHARED)){
         return -1;
@@ -641,11 +640,11 @@ uint64
 sys_munmap(void)
 {
     uint64 addr;
-    int length;
+    int len;
 
-    if(argaddr(0,&addr) < 0 ||argint(1,&length) < 0){
+    if(argaddr(0,&addr) < 0 ||argint(1,&len) < 0){
         return -1;
     }
 
-    return munmap(addr,length);
+    return munmap(addr,len);
 }

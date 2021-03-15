@@ -21,9 +21,7 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 
-// // System calls for labs
-// #define SYS_ntas   22
-// #define SYS_mmap   23
-// #define SYS_munmap 24
-#define SYS_mmap   22
-#define SYS_munmap 23
+// System calls for labs
+#define SYS_ntas   22
+#define SYS_mmap   23
+#define SYS_munmap 24

@@ -59,11 +59,20 @@ handle_page_fault(struct proc *p,uint64 va)
 
     struct vma *vma;
 
+    bool found = false;
+
       for(int i=0;i<MAXVMA;i++){
         if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
            vma = &p->vma_table[i];
+           found = true;
         }
       }
+
+    if (found == true) {
+      continue;
+    } else {
+      vma = 0;
+    }
 
     if (vma == 0) {
       return -1;

@@ -59,7 +59,7 @@ handle_page_fault(struct proc *p,uint64 va)
 
     struct vma *vma;
 
-    if (vma = setvma(p, a) == 0) {
+    if ((vma = setvma(p, a)) == 0) {
       return -1;
     }
 

@@ -11,6 +11,7 @@
 #define MAP_SHARED  1
 #define MAP_PRIVATE 2
 
-//same as pte r/w
+//rewrote like previous lab format
+
 #define PROT_READ  (1L << 1)
 #define PROT_WRITE (1L << 2)

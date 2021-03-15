@@ -496,12 +496,11 @@ mmap(uint64 addr,int len,int prot,int flags,struct file *f,int offset)
         pt &= ~PROT_WRITE;
     }
 
-    //no readable
+    // if not readable
     if(f->readable==0){
         return -1;
     }
 
-    //no writable and mmap with write
     if((f->writable==0)&&(pt&PROT_WRITE)){
         return -1;
     }
@@ -509,7 +508,9 @@ mmap(uint64 addr,int len,int prot,int flags,struct file *f,int offset)
     struct proc *p = myproc();
 
     int i;
-    for(i=0;i<MAXVMA&&p->vma_table[i].inuse;i++){
+    i = 0;
+    while (i < MAXVMA && p->vma_table[i].inuse) {
+      i++;
     }
 
     if(i==MAXVMA){
@@ -518,21 +519,21 @@ mmap(uint64 addr,int len,int prot,int flags,struct file *f,int offset)
 
     uint64 start;
     uint64 end;
-    if(i==0){
+    if(i==0) {
         start=MMAP_BASE;
-    }else{
+    } else {
         start=p->vma_table[i-1].length;
     }
 
-    if(start>TRAPFRAME){
-        return -1;
-    }
+    // if(start>TRAPFRAME){
+    //     return -1;
+    // }
 
     end=start+PGROUNDUP(len);
 
-    if(end>TRAPFRAME){
-        end=TRAPFRAME;
-    }
+    // if(end>TRAPFRAME){
+    //     end=TRAPFRAME;
+    // }
 
     p->vma_table[i].inuse=1;
     p->vma_table[i].start=start;
@@ -541,6 +542,7 @@ mmap(uint64 addr,int len,int prot,int flags,struct file *f,int offset)
     p->vma_table[i].flags=flags;
     p->vma_table[i].file=f;
 
+    //increment refcount
     filedup(f);
 
     return start;

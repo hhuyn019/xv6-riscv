@@ -123,6 +123,7 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  // initilization
    for(int i=0;i<MAXVMA;i++){
     p->vma_table[i].inuse=0;
     p->vma_table[i].start=0;
@@ -264,25 +265,12 @@ fork(void)
     return -1;
   }
 
-  //  for(int i=0;i<MAXVMA ; i++)
-  // {
-  //    struct vma *v=&p->vma_table[i];
-  //    struct vma *nv=&np->vma_table[i];
-  //     //only unmap at start,end or the whole region
-  //     if(v->inuse)
-  //     {
-  //        memmove(nv,v,sizeof(struct vma)); 
-	//  filedup(nv->file);
-  //     }
-  // }
-
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
     freeproc(np);
     release(&np->lock);
     return -1;
   }
-
 
    for(int i=0;i<MAXVMA;i++){
     np->vma_table[i].inuse=p->vma_table[i].inuse;
@@ -292,6 +280,7 @@ fork(void)
     np->vma_table[i].perm=p->vma_table[i].perm;
 
     if(p->vma_table[i].file){
+      // increment refcounter using filedup
         np->vma_table[i].file=filedup(p->vma_table[i].file);
     }
   }
@@ -372,20 +361,10 @@ exit(int status)
 
   for(int i=0;i<MAXVMA;i++){
     if(p->vma_table[i].inuse){
+        // finds vma for address range and unmap unncesscary pages
         munmap(p->vma_table[i].start,p->vma_table[i].length-p->vma_table[i].start);       
     }
   }
-
-  //   for(int i=0;i<MAXVMA ; i++)
-  // {
-  //    struct vma *v=&p->vma_table[i];
-  //     //only unmap at start,end or the whole region
-  //     if(v->inuse)
-  //     {
-  //        uvmunmap(p->pagetable,v->addr,v->length / PGSIZE,0);
-  //        memset(v,0,sizeof(struct vma)); 
-  //     }
-  // }
 
   begin_op(ROOTDEV);
   iput(p->cwd);

@@ -210,7 +210,7 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
     *pte = 0;
     if(a == last)
       break;
-    a += PGSIZE;
+    // a += PGSIZE;
     // pa += PGSIZE;
   }
 }

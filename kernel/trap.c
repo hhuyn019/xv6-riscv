@@ -82,7 +82,6 @@ handle_page_fault(struct proc *p,uint64 va)
         kfree(mem);
         return -1;
     }
-
     int r;
     ilock(ip);
 
@@ -90,13 +89,11 @@ handle_page_fault(struct proc *p,uint64 va)
         iunlock(ip);
         return -1;
     }
-
     iunlock(ip);
 
     if(r<PGSIZE){
         memset((char *)(mem+r),0,PGSIZE-r);
     }
-
     return 0;
 }
 

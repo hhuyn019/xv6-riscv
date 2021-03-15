@@ -194,10 +194,10 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 size, int do_free)
       // printf("va=%p pte=%p\n", a, *pte);
       // panic("uvmunmap: not mapped");
       // return;
-      //   if(a == last)
-      //   break;
-      // a += PGSIZE;
-      // pa += PGSIZE;
+        if(a == last)
+        break;
+      a += PGSIZE;
+      pa += PGSIZE;
       // continue;
       continue;
     }

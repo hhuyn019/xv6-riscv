@@ -255,6 +255,18 @@ fork(void)
     return -1;
   }
 
+   for(int i=0;i<MAXVMA ; i++)
+  {
+     struct vma *v=&p->vma_table[i];
+     struct vma *nv=&np->vma_table[i];
+      //only unmap at start,end or the whole region
+      if(v->inuse)
+      {
+         memmove(nv,v,sizeof(struct vma)); 
+	 filedup(nv->file);
+      }
+  }
+
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
     freeproc(np);
@@ -332,6 +344,17 @@ exit(int status)
       fileclose(f);
       p->ofile[fd] = 0;
     }
+  }
+
+    for(int i=0;i<MAXVMA ; i++)
+  {
+     struct vma *v=&p->vma_table[i];
+      //only unmap at start,end or the whole region
+      if(v->inuse)
+      {
+         uvmunmap(p->pagetable,v->addr,v->length / PGSIZE,0);
+         memset(v,0,sizeof(struct vma)); 
+      }
   }
 
   begin_op(ROOTDEV);

@@ -589,7 +589,7 @@ int
 munmap(uint64 addr,int len)
 {
     struct proc *p=myproc();
-    struct vma *vma;
+    struct vma *vma = 0;
 
     
     int flags=vma->flags;

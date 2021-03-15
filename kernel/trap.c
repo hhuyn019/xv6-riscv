@@ -84,7 +84,7 @@ usertrap(void)
       uint lazy=0;
       for(uint i=0;i<MAXVMA;i++)
       {
-	 struct vma *v=&p->vma[i];     
+	 struct vma *v=&p->vma_table[i];     
          if(v->inuse && va>=v->addr && va<v->addr+v->length)//find corresponding vma
 	 {
             // lazy allocation		 

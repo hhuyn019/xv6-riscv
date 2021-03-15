@@ -72,53 +72,54 @@ usertrap(void)
 
     syscall();
   } else if((which_dev = devintr()) != 0){
+  } else {
     // ok
-   } else if(r_scause()==13 || r_scause()==15)//page fault
-  {
-      // check whether lazy allocation is needed	  
-      uint64 va=r_stval();
+  //  } else if(r_scause()==13 || r_scause()==15)//page fault
+  // {
+  //     // check whether lazy allocation is needed	  
+  //     uint64 va=r_stval();
 
-      if(va>=p->sz) goto a;
-      if(va<p->tf->sp) goto a;
+  //     if(va>=p->sz) goto a;
+  //     if(va<p->tf->sp) goto a;
 
-      uint lazy=0;
-      for(uint i=0;i<MAXVMA;i++)
-      {
-	 struct vma *v=&p->vma_table[i];     
-         if(v->inuse && va>=v->addr && va<v->addr+v->length)//find corresponding vma
-	 {
-            // lazy allocation		 
-	    char * mem;
-	    mem=kalloc();
-	    memset(mem,0,PGSIZE);
-	    if(mem==0) goto a;
-            va=PGROUNDDOWN(va);
-	    uint64 off=v->start+va-v->addr;// starting point + extra offset
+  //     uint lazy=0;
+  //     for(uint i=0;i<MAXVMA;i++)
+  //     {
+	//  struct vma *v=&p->vma_table[i];     
+  //        if(v->inuse && va>=v->addr && va<v->addr+v->length)//find corresponding vma
+	//  {
+  //           // lazy allocation		 
+	//     char * mem;
+	//     mem=kalloc();
+	//     memset(mem,0,PGSIZE);
+	//     if(mem==0) goto a;
+  //           va=PGROUNDDOWN(va);
+	//     uint64 off=v->start+va-v->addr;// starting point + extra offset
 
-	    // PROT_READ=1 PROT_WRITE=2 PROT_EXEC=4
-	    // PTE_R=2     PTE_W=4      PTE_X=8
-	    // 所以需要将vma[i]->prot 左移一位
-	    if(mappages(p->pagetable,va,PGSIZE,(uint64)mem,(v->perm<<1) |PTE_U  )!=0)
-	    {
-	       kfree(mem);
-	       goto a;
-	    }
-            // read 4096 bytes of relevant file into allocated page
-	    ilock(v->file->ip);
-	    readi(v->file->ip,1,va,off,PGSIZE);
-	    iunlock(v->file->ip);
-	    lazy=1;
-	    break;
-	 } 
-      }
-      if(!lazy)  goto a;// no lazy allocation is needed
-  } 
-  else {
-   a:	  
-    printf("usertrap(): unexpected scause %p (%s) pid=%d\n", r_scause(), scause_desc(r_scause()), p->pid);
-    printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-    p->killed = 1;
-  }
+	//     // PROT_READ=1 PROT_WRITE=2 PROT_EXEC=4
+	//     // PTE_R=2     PTE_W=4      PTE_X=8
+	//     // 所以需要将vma[i]->prot 左移一位
+	//     if(mappages(p->pagetable,va,PGSIZE,(uint64)mem,(v->perm<<1) |PTE_U  )!=0)
+	//     {
+	//        kfree(mem);
+	//        goto a;
+	//     }
+  //           // read 4096 bytes of relevant file into allocated page
+	//     ilock(v->file->ip);
+	//     readi(v->file->ip,1,va,off,PGSIZE);
+	//     iunlock(v->file->ip);
+	//     lazy=1;
+	//     break;
+	//  } 
+  //     }
+  //     if(!lazy)  goto a;// no lazy allocation is needed
+  // } 
+  // else {
+  //  a:	  
+  //   printf("usertrap(): unexpected scause %p (%s) pid=%d\n", r_scause(), scause_desc(r_scause()), p->pid);
+  //   printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+  //   p->killed = 1;
+  // }
 
   if(p->killed)
     exit(-1);

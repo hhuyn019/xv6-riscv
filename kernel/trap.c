@@ -78,13 +78,10 @@ handle_page_fault(struct proc *p,uint64 va)
       return -1;
     }
     
-    mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U);
-    kfree(mem);
-    return -1;
-    // if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
-    //     kfree(mem);
-    //     return -1;
-    // }
+    if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
+        kfree(mem);
+        return -1;
+    }
 
     int r;
     ilock(ip);
@@ -96,9 +93,9 @@ handle_page_fault(struct proc *p,uint64 va)
 
     iunlock(ip);
 
-    if(r<PGSIZE){
-        memset((char *)(mem+r),0,PGSIZE-r);
-    }
+    // if(r<PGSIZE){
+    //     memset((char *)(mem+r),0,PGSIZE-r);
+    // }
 
     return 0;
 }

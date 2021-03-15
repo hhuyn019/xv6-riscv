@@ -39,7 +39,7 @@ trapinithart(void)
 struct vma *
 pickvma(struct proc *p,uint64 a)
 {
-    for(int i=0;i<MAX_VMA_COUNT;i++){
+    for(int i=0;i<MAXVMA;i++){
         if(p->vma_table[i].inuse&&a>=p->vma_table[i].start&&a<p->vma_table[i].length){
             return &p->vma_table[i];
         }

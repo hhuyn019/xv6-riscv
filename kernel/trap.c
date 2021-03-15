@@ -139,6 +139,7 @@ usertrap(void)
       if(handle_page_fault(p,r_stval())<0){
           p->killed=1;
       }
+   }
    else {
   //  a:	  
     printf("usertrap(): unexpected scause %p (%s) pid=%d\n", r_scause(), scause_desc(r_scause()), p->pid);

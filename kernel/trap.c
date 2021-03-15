@@ -115,7 +115,7 @@ usertrap(void)
   // } 
   }
   else {
-   a:	  
+  //  a:	  
     printf("usertrap(): unexpected scause %p (%s) pid=%d\n", r_scause(), scause_desc(r_scause()), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     p->killed = 1;

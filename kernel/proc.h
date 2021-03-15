@@ -82,6 +82,10 @@ struct trapframe {
 
 enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+
+#define MAXVMA 16
+
+
 struct vma {
 	uint64 start;
 	uint64 length;
@@ -89,6 +93,7 @@ struct vma {
 	int flags;
 	struct file *file;
 	int inuse;
+  uint64 addr;
 };
 
 // Per-process state

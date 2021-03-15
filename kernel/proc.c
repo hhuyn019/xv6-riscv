@@ -346,16 +346,16 @@ exit(int status)
     }
   }
 
-    for(int i=0;i<MAXVMA ; i++)
-  {
-     struct vma *v=&p->vma_table[i];
-      //only unmap at start,end or the whole region
-      if(v->inuse)
-      {
-         uvmunmap(p->pagetable,v->addr,v->length / PGSIZE,0);
-         memset(v,0,sizeof(struct vma)); 
-      }
-  }
+  //   for(int i=0;i<MAXVMA ; i++)
+  // {
+  //    struct vma *v=&p->vma_table[i];
+  //     //only unmap at start,end or the whole region
+  //     if(v->inuse)
+  //     {
+  //        uvmunmap(p->pagetable,v->addr,v->length / PGSIZE,0);
+  //        memset(v,0,sizeof(struct vma)); 
+  //     }
+  // }
 
   begin_op(ROOTDEV);
   iput(p->cwd);

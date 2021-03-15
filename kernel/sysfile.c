@@ -525,15 +525,7 @@ mmap(uint64 addr,int len,int prot,int flags,struct file *f,int offset)
         start=p->vma_table[i-1].length;
     }
 
-    // if(start>TRAPFRAME){
-    //     return -1;
-    // }
-
     end=start+PGROUNDUP(len);
-
-    // if(end>TRAPFRAME){
-    //     end=TRAPFRAME;
-    // }
 
     p->vma_table[i].inuse=1;
     p->vma_table[i].start=start;
@@ -552,21 +544,24 @@ uint64
 sys_mmap(void)
 {
     uint64 addr;
-    int len;
-    int prot;
-    int flags;
-    int offset;
-    struct file *f;
+    int length, perm, flags, offset;
+    struct file *file;
 
-    if(argaddr(0,&addr) < 0 || argint(1,&len) < 0 || argint(2,&prot) < 0 || argint(3,&flags) < 0 || argfd(4,0,&f) < 0 || argint(5,&offset) < 0){
+    // param check
+    if(argaddr(0,&addr) < 0 
+    || argint(1,&length) < 0 
+    || argint(2,&perm) < 0 
+    || argint(3,&flags) < 0 
+    || argfd(4,0,&file) < 0 
+    || argint(5,&offset) < 0){
         return -1;
     }
 
-    return mmap(addr,len,prot,flags,f,offset);
+    return mmap(addr,length,perm,flags,file,offset);
 }
 
 struct vma *
-findvma(struct proc *p,uint64 addr){
+locatevma(struct proc *p,uint64 addr){
     for(int i=0;i<MAXVMA;i++){
         if(p->vma_table[i].start<=addr&&p->vma_table[i].length>addr){
             return &p->vma_table[i];
@@ -596,44 +591,40 @@ munmap(uint64 addr,int len)
     struct proc *p=myproc();
     struct vma *vma;
 
-    //find the mmapped file
-    if((vma=findvma(p,addr))==0){
+    
+    int flags=vma->flags;
+    int perm=vma->perm;
+
+    if((vma=locatevma(p,addr))==0){
         return -1;
     }
-
-    int flags=vma->flags;
-    int prot=vma->perm;
 
     if((flags & MAP_PRIVATE) && (flags & MAP_SHARED)){
         return -1;
     }
 
-    if((prot & PROT_WRITE) && (flags & MAP_SHARED)){
-        //write back only if modified
-        pte_t *pte=walk(p->pagetable, addr,0);
+    if((perm & PROT_WRITE) && (flags & MAP_SHARED)){
+        pte_t *pte = walk(p->pagetable, addr,0);
 
         if(pte && (*pte & PTE_V) && (*pte & PTE_D) && write(vma->file,addr,len)<0){
             return -1;
         }
     }
 
-    //unmap with 3 cases:
-    //1. tail
-    //2. head
-    //3. whole  
-    //
-    //impossible in the middle
+    // from lab specs
+    //An munmap call might cover only a portion of an mmap-ed region, 
+    //but you can assume that it will either unmap at the start, or at the end, or the whole region (but not punch a hole in the middle of a region).
     uvmunmap(p->pagetable, addr, len, 1);
 
     int a=addr+len;
     if(addr>vma->start){
-        //tail
+        //UNMAP END
         vma->length=addr;
     }else if(a<vma->length){
-        //head
+        //UNMAP START
         vma->start=a;
     }else{
-        //whole
+        //UNMAP WHOLE
         fileclose(vma->file);
         vma->inuse=0;
         vma->start=0;
@@ -650,11 +641,11 @@ uint64
 sys_munmap(void)
 {
     uint64 addr;
-    int len;
+    int length;
 
-    if(argaddr(0,&addr) < 0 ||argint(1,&len) < 0){
+    if(argaddr(0,&addr) < 0 ||argint(1,&length) < 0){
         return -1;
     }
 
-    return munmap(addr,len);
+    return munmap(addr,length);
 }

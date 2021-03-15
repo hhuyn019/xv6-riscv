@@ -69,9 +69,9 @@ handle_page_fault(struct proc *p,uint64 va)
         return -1;
     }
 
-    if((mem=(char *)kalloc())==0){
-        return -1;
-    }
+    // if((mem=(char *)kalloc())==0){
+    //     return -1;
+    // }
 
     if(mappages(pagetable, a, PGSIZE, (uint64)mem, vma->perm|PTE_U) != 0){
         kfree(mem);
@@ -135,7 +135,6 @@ usertrap(void)
   } else if((which_dev = devintr()) != 0){
     //ok
    } else if(c==13||c==15){
-      //page fault
       if(handle_page_fault(p,r_stval())<0){
           p->killed=1;
       }

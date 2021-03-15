@@ -359,12 +359,12 @@ exit(int status)
     }
   }
 
-  for(int i=0;i<MAXVMA;i++){
-    if(p->vma_table[i].inuse){
-        // finds vma for address range and unmap unncesscary pages
-        munmap(p->vma_table[i].start,p->vma_table[i].length-p->vma_table[i].start);       
-    }
-  }
+  // for(int i=0;i<MAXVMA;i++){
+  //   if(p->vma_table[i].inuse){
+  //       // finds vma for address range and unmap unncesscary pages
+  //       munmap(p->vma_table[i].start,p->vma_table[i].length-p->vma_table[i].start);       
+  //   }
+  // }
 
   begin_op(ROOTDEV);
   iput(p->cwd);

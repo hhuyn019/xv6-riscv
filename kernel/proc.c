@@ -123,6 +123,15 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+   for(int i=0;i<MAXVMA;i++){
+    p->vma_table[i].inuse=0;
+    p->vma_table[i].start=0;
+    p->vma_table[i].length=0;
+    p->vma_table[i].perm=0;
+    p->vma_table[i].file=0;
+  }
+
+
   return p;
 }
 
@@ -255,17 +264,17 @@ fork(void)
     return -1;
   }
 
-   for(int i=0;i<MAXVMA ; i++)
-  {
-     struct vma *v=&p->vma_table[i];
-     struct vma *nv=&np->vma_table[i];
-      //only unmap at start,end or the whole region
-      if(v->inuse)
-      {
-         memmove(nv,v,sizeof(struct vma)); 
-	 filedup(nv->file);
-      }
-  }
+  //  for(int i=0;i<MAXVMA ; i++)
+  // {
+  //    struct vma *v=&p->vma_table[i];
+  //    struct vma *nv=&np->vma_table[i];
+  //     //only unmap at start,end or the whole region
+  //     if(v->inuse)
+  //     {
+  //        memmove(nv,v,sizeof(struct vma)); 
+	//  filedup(nv->file);
+  //     }
+  // }
 
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
@@ -273,6 +282,21 @@ fork(void)
     release(&np->lock);
     return -1;
   }
+
+
+   for(int i=0;i<MAXVMA;i++){
+    np->vma_table[i].inuse=p->vma_table[i].inuse;
+    np->vma_table[i].start=p->vma_table[i].start;
+    np->vma_table[i].length=p->vma_table[i].length;
+    np->vma_table[i].flags=p->vma_table[i].flags;
+    np->vma_table[i].perm=p->vma_table[i].perm;
+
+    if(p->vma_table[i].file){
+        np->vma_table[i].file=filedup(p->vma_table[i].file);
+    }
+  }
+
+
   np->sz = p->sz;
 
   np->parent = p;
@@ -343,6 +367,12 @@ exit(int status)
       struct file *f = p->ofile[fd];
       fileclose(f);
       p->ofile[fd] = 0;
+    }
+  }
+
+  for(int i=0;i<MAXVMA;i++){
+    if(p->vma_table[i].inuse){
+        munmap(p->vma_table[i].start,p->vma_table[i].length-p->vma_table[i].start);       
     }
   }
 

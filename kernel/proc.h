@@ -83,8 +83,9 @@ struct trapframe {
 enum procstate { UNUSED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 
-#define MAXVMA 16
-
+#define MAXVMA 64
+// #define MAX_VMA_COUNT    64
+#define MMAP_BASE        0x40000000
 
 struct vma {
 	uint64 start;

@@ -15,6 +15,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "memlayout.h"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -483,120 +484,175 @@ sys_pipe(void)
   return 0;
 }
 
+int
+mmap(uint64 addr,int len,int prot,int flags,struct file *f,int offset)
+{
+    if(addr!=0 || offset!=0||f==0){
+        return -1;
+    }
+
+    int pt=prot;
+    if(flags & MAP_PRIVATE){
+        pt &= ~PROT_WRITE;
+    }
+
+    //no readable
+    if(f->readable==0){
+        return -1;
+    }
+
+    //no writable and mmap with write
+    if((f->writable==0)&&(pt&PROT_WRITE)){
+        return -1;
+    }
+
+    struct proc *p = myproc();
+
+    int i;
+    for(i=0;i<MAXVMA&&p->vma_table[i].inuse;i++){
+    }
+
+    if(i==MAXVMA){
+        return -1;
+    }
+
+    uint64 start;
+    uint64 end;
+    if(i==0){
+        start=MMAP_BASE;
+    }else{
+        start=p->vma_table[i-1].length;
+    }
+
+    if(start>TRAPFRAME){
+        return -1;
+    }
+
+    end=start+PGROUNDUP(len);
+
+    if(end>TRAPFRAME){
+        end=TRAPFRAME;
+    }
+
+    p->vma_table[i].inuse=1;
+    p->vma_table[i].start=start;
+    p->vma_table[i].length=end;
+    p->vma_table[i].perm=prot;
+    p->vma_table[i].flags=flags;
+    p->vma_table[i].file=f;
+
+    filedup(f);
+
+    return start;
+}
+
 uint64
 sys_mmap(void)
 {
-   int len;
-   int prot,flags,fd;
-   struct file *f;
-   if(argint(1, &len) < 0 ||  argint(2, &prot) < 0 || argint(3, &flags) < 0  || argfd(4, &fd,&f) < 0  )
-    return -1;
+    uint64 addr;
+    int len;
+    int prot;
+    int flags;
+    int offset;
+    struct file *f;
 
-   // if file is read-only,but map it as writable.return fail
-   if(!f->writable && (prot & PROT_WRITE) && (flags & MAP_SHARED ) )
-   {
-      return -1;
-   }
+    if(argaddr(0,&addr) < 0 || argint(1,&len) < 0 || argint(2,&prot) < 0 || argint(3,&flags) < 0 || argfd(4,0,&f) < 0 || argint(5,&offset) < 0){
+        return -1;
+    }
 
-   struct proc* p=myproc();
-   for(uint i=0;i<MAXVMA;i++)
-   { 
-      struct vma *v=&p->vma_table[i]	;   
-      if(!v->inuse) //find an unsed vma
-      {
-         // store relative auguments
-	 v->inuse=1;
-         v->addr=p->sz;//use p->sz to p->sz+len to map the file
-	 len= PGROUNDUP(len);
-	 p->sz+=len;
-	 v->length=len;
-	 v->perm=prot;
-	 v->flags=flags;
-	 v->file= filedup(f);//increase the file's ref cnt
-	 v->start=0;//staring point in f to map is 0
-	 return v->addr;
-      }
-   }
-
-   return -1;
+    return mmap(addr,len,prot,flags,f,offset);
 }
 
+struct vma *
+findvma(struct proc *p,uint64 addr){
+    for(int i=0;i<MAXVMA;i++){
+        if(p->vma_table[i].start<=addr&&p->vma_table[i].length>addr){
+            return &p->vma_table[i];
+        }
+    }
 
-int file_write_new(struct file *f, uint64 addr,int n ,uint off)
+    return 0;
+}
+
+int
+write(struct file *f,uint64 addr,int n){
+    if(f->writable == 0)
+        return -1;
+
+    int r;
+    begin_op(f->ip->dev);
+    ilock(f->ip);
+    r = writei(f->ip, 1, addr , 0, n);
+    iunlock(f->ip);
+    end_op(f->ip->dev);
+    return r == n ? n : -1;
+}
+
+int 
+munmap(uint64 addr,int len)
 {
-   int r=0;
-   if(f->writable==0) return -1;
+    struct proc *p=myproc();
+    struct vma *vma;
 
-   int max= ((MAXOPBLOCKS-1-1-2) / 2)* BSIZE;
-   int i=0;
-   while(i<n)
-   {
-      int n1=n-i;
-      if(n1>max) n1=max;
+    //find the mmapped file
+    if((vma=findvma(p,addr))==0){
+        return -1;
+    }
 
-      begin_op(ROOTDEV);
-      ilock(f->ip);
-      if((r=writei(f->ip , 1 , addr +i,off,n1)) >0 )
-          off+=r;
-      iunlock(f->ip);
-      end_op(ROOTDEV);
+    int flags=vma->flags;
+    int prot=vma->perm;
 
-      if(r!=n1)  break;
-      i+=r;
-   }
+    if((flags & MAP_PRIVATE) && (flags & MAP_SHARED)){
+        return -1;
+    }
 
-   return 0;
+    if((prot & PROT_WRITE) && (flags & MAP_SHARED)){
+        //write back only if modified
+        pte_t *pte=walk(p->pagetable, addr,0);
+
+        if(pte && (*pte & PTE_V) && (*pte & PTE_D) && write(vma->file,addr,len)<0){
+            return -1;
+        }
+    }
+
+    //unmap with 3 cases:
+    //1. tail
+    //2. head
+    //3. whole  
+    //
+    //impossible in the middle
+    uvmunmap(p->pagetable, addr, len, 1);
+
+    int a=addr+len;
+    if(addr>vma->start){
+        //tail
+        vma->length=addr;
+    }else if(a<vma->length){
+        //head
+        vma->start=a;
+    }else{
+        //whole
+        fileclose(vma->file);
+        vma->inuse=0;
+        vma->start=0;
+        vma->length=0;
+        vma->flags=0;
+        vma->perm=0;
+        vma->file=0;
+    }
+
+    return 0;
 }
 
 uint64
 sys_munmap(void)
 {
-  uint64 addr;
-  int len;   
-  int close=0;
-  if(argaddr(0, &addr) < 0 ||  argint(1, &len) < 0 )
-    return -1;
-   struct proc* p=myproc();
-   for(uint i=0;i<MAXVMA;i++)
-   { 
-      struct vma *v=&p->vma_table[i];
-      //only unmap at start,end or the whole region
-      if(v->inuse && addr>=v->addr && addr <=v->addr+v->length)
-      {
-	 uint64 npages=0;  
-         uint off=v->start;	 
-         if(addr==v->addr) // unmap at start
-	 {
-	     if(len >= v->length) //unmap whole region
-	     {
-		 len=v->length;      
-	         v->inuse=0;
-		 close=1;
-	     }
-	     else//unmap from start but not whole region
-	     {
-		v->addr+=len;     
-		v->start=len;//update start point at which to map
-	     }
-	 }
-	 len=PGROUNDUP(len);
-         npages=len/PGSIZE; 
-	 v->length-=len;
-	 p->sz-=len;
+    uint64 addr;
+    int len;
 
-         if(v->flags & MAP_SHARED) // need to write back pages
-	 {
-	    file_write_new(v->file, addr , len , off );
-	 }	 
+    if(argaddr(0,&addr) < 0 ||argint(1,&len) < 0){
+        return -1;
+    }
 
-
-         uvmunmap(p->pagetable,PGROUNDDOWN(addr),npages,0);
-         // decrease ref cnt of v->f 
-	 if(close) fileclose(v->file);
-
-	 return 0;
-      }
-
-   }
-  return -1;
+    return munmap(addr,len);
 }
